@@ -71,6 +71,14 @@ extern "C" void gpio_matrix_in(uint32_t gpio, uint32_t signal_idx, bool inv);
 #define DEADTIME_NS   300.0f
 #define AMP_PERCENT   0.90f
 
+/* --- SUPRESION DE PULSO MINIMO: habilitacion ---
+   Interruptor para activar (1) o desactivar (0) la supresion de pulso minimo.
+   Util para depurar: con el analizador puedes comparar el cruce CON supresion
+   (1, pulsos diminutos cerca del cruce se omiten -> salida limpia) vs SIN
+   supresion (0, todos los pulsos salen, incluso los deformes mas estrechos que
+   el dead-time). Ajusta segun tu carga y lo que midas.                         */
+#define MIN_PULSE_ENABLE  1     // 1 = suprimir pulsos minimos ; 0 = no suprimir
+
 #define MIN_PULSE_NS    (2.0f * DEADTIME_NS * 1.2f)
 #define MIN_PULSE_TICKS ((int)(MIN_PULSE_NS / TICK_NS + 0.5f))
 
@@ -174,7 +182,14 @@ void IRAM_ATTR MCPWM_ISR(void*) {
   int sign    = (sineVal > 0) ? 1 : -1;
 
   /* --- SUPRESION DE PULSO MINIMO (igual que el legacy) --- */
+  /* --- SUPRESION DE PULSO MINIMO (respeta la bandera MIN_PULSE_ENABLE) ---
+     Si MIN_PULSE_ENABLE es 0, suppress queda siempre en false y todos los pulsos
+     salen (util para ver el comportamiento sin supresion en el analizador).     */
+#if MIN_PULSE_ENABLE
   bool suppress = (sineVal > -MIN_PULSE_TICKS && sineVal < MIN_PULSE_TICKS);
+#else
+  bool suppress = false;
+#endif
 
   /* --- DETECCION DE CRUCE POR CERO (igual que el legacy) --- */
   if (sign != prevSign) {
@@ -256,6 +271,9 @@ void reportar() {
                 FREQ_OF_INC(phase_increment), TEST_FREQ_HZ);
   Serial.printf("resolucion = %.4f uHz por paso de phase_increment\n",
                 (1.0/4294967296.0)*REAL_FREQ_CARR*1e6);
+  Serial.printf("supresion pulso minimo: %s (umbral %d ticks / %.0f ns)\n",
+                MIN_PULSE_ENABLE ? "ACTIVADA" : "desactivada",
+                MIN_PULSE_TICKS, MIN_PULSE_NS);
   Serial.println(">>> Para el PLL: ajustar phase_increment mueve la frecuencia <<<");
   Serial.println("=====================================================");
 }
@@ -329,4 +347,3 @@ void loop() {
   // delay(500);
   delay(1000);
 }
-

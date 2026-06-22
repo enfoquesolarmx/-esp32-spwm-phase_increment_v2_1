@@ -1,3 +1,9 @@
+<img src="/mcpwm_06.png" width="600" alt="PPL">
+<img src="/mcpwm_07.png" width="600" alt="PPL">
+<img src="/mcpwm_08.png" width="600" alt="PPL">
+
+
+
 # -esp32-spwm-phase_increment_v2_1
 Migración del motor de fase SPWM de un inversor de puente H sobre ESP32, desde un índice de muestra entero a un acumulador de fase de 32 bits con tabla de seno (el patrón DDS/NCO), habilitando salida precisa de 60.000 Hz y sentando la base para rampas de frecuencia, control de modulación y un futuro PLL de grid-tie.
 
